@@ -1,15 +1,15 @@
 #%%
-from sotabencheval.language_modeling.wikitext import WikiText103Eval, perplexity_evauluate
 import sys
-import numpy as np
 import re
 from itertools import islice
 from functools import reduce
-from sacremoses import MosesTokenizer, MosesDetokenizer
-from tqdm import tqdm
 import argparse
 import logging
-from tqdm import trange
+from pathlib import Path
+
+from sacremoses import MosesTokenizer, MosesDetokenizer
+from tqdm import tqdm
+import numpy as np
 
 import torch
 import torch.nn.functional as F
@@ -45,7 +45,7 @@ def iterate_over_batches(data, bs, bptt):
     yield from zip(batched(X, bptt), batched(Y, bptt))
 
 def read_wiki():
-    with open('data/wikitext-103/wiki.test.tokens') as f:
+    with (Path.home() / '.cache/sotabench/data/wikitext-103/wiki.test.tokens').open() as f:
         return f.readlines()
 
 def evaluate(experiemnt, log_probs_generator, model, test_data, batch_size=8, bptt=128, device='cuda'):
