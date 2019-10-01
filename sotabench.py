@@ -176,6 +176,7 @@ def evaluate_gpt2_medium(wikitext103_testset):
     return _evaluate_gpt2(wikitext103_testset,
                           model_name="GPT2-medium",                          
                           model_description="OpenAI GPT2-medium: 24-layer, 1024-hidden, 16-heads, 345M parameters."
+                          # expected: 26.37
     )
 
 
@@ -183,7 +184,9 @@ def evaluate_gpt2_large(wikitext103_testset):
     return _evaluate_gpt2(wikitext103_testset,
                           model_name="GPT2-large",
                           model_description="OpenAI GPT2-large: 36-layer, 1280-hidden, 20-heads, 774M parameters.",
-                          batch_size=1)
+                          batch_size=1
+                          # expected: 22.05
+    )
 ## GPT1
 
 def setup_gpt(model_name="openai-gpt"):
@@ -195,7 +198,7 @@ def evaluate_gpt1(wikitext103_testset):
     experiment = WikiText103Eval(
         model_name="GPT",
         paper_pwc_id="",
-        model_description="Zeroshoot original OpenAI GPT: 12-layer, 768-hidden, 12-heads, 110M parameters.",
+        model_description="Zeroshoot on Wikipedia OpenAI GPT v1: 12-layer, 768-hidden, 12-heads, 110M parameters.",
         text_transformation=True,
         subword_tokenization = True,
     )
@@ -215,50 +218,64 @@ def evaluate_gpt1(wikitext103_testset):
     evaluate(experiment, log_probs_generator, model,
              test_data,  batch_size=8, bptt=seq_len)
 
-## XLNet
-def setup_xlnet(model_name):
-    model = XLNetLMHeadModel.from_pretrained(model_name)
-    tokenizer = XLNetTokenizer.from_pretrained(model_name)
-    return model, tokenizer
+# ## XLNet
+# def setup_xlnet(model_name):
+#     model = XLNetLMHeadModel.from_pretrained(model_name)
+#     tokenizer = XLNetTokenizer.from_pretrained(model_name)
+#     return model, tokenizer
 
 
-def _evaluate_xlnet(wikitext103_testset, model_name, model_description, pretrained_name=None, batch_size=1):
-    experiment = WikiText103Eval(
-        model_name=model_name,
-        paper_arxiv_id="...",
-        paper_pwc_id="...",
-        model_description=model_description,
-        text_transformation=True,
-        subword_tokenization=True,
+# def _evaluate_xlnet(wikitext103_testset, model_name, model_description, pretrained_name=None, batch_size=10):
+#     experiment = WikiText103Eval(
+#         model_name=model_name,
+#         paper_arxiv_id="1906.08237v1",
+#         paper_pwc_id="xlnet-generalized-autoregressive-pretraining",
+#         model_description=model_description,
+#         text_transformation=True,
+#         subword_tokenization=True,
 
-    )
-    model, tokenizer = setup_xlnet(pretrained_name or model_name.lower())
+#     )
+#     model, tokenizer = setup_xlnet(pretrained_name or model_name.lower())
 
-    seq_len = 512
-    tokenizer.max_len = 2**62
-    fixes = [fix_moses, fix_header, fix_unk('[unknown]')]
-    test_data = tokenizer.encode(preprocess_text(wikitext103_testset, fixes))
+#     seq_len = 512
+#     tokenizer.max_len = 2**62
+#     fixes = [fix_moses, fix_header, fix_unk('[unknown]')]
+#     test_data = tokenizer.encode(preprocess_text(wikitext103_testset, fixes))
 
-    def log_probs_generator(model, data_iter):
-        for x, y in data_iter:
-            neglog_prob, *_ = model(input_ids=x)
-            yield neglog_prob, y
+#     def log_probs_generator(model, data_iter):
+#         past = {}
+#         # inputs = {'input_ids': input_ids, 'perm_mask': perm_mask, 'target_mapping': target_mapping}
+#         for x, y in data_iter:
+#             # # XLNet is a direct (predict same token, not next token) and bi-directional model by default
+#             # # => need one additional dummy token in the input (will be masked), attention mask and target mapping (see model docstring)
+#             #TODO: figure out how to predict lager amount of tokens than one
+#             input_ids = torch.cat(
+#                 (x, torch.zeros((1, 1), dtype=torch.long, device='cuda')), dim=1)
+#             perm_mask = torch.zeros(
+#                 (1, input_ids.shape[1], input_ids.shape[1]), dtype=torch.float, device='cuda')
+#             perm_mask[:, :, -1] = 1.0  # Previous tokens don't see last token
+#             target_mapping = torch.zeros((1, 1, input_ids.shape[1]), dtype=torch.float, device=device)
+#             target_mapping[0, 0, -1] = 1.0  # predict last token
+#             log_probs, mems, * \
+#                 _ = model(input_ids=input_ids, perm_mask=perm_mask, ** past)
+#             past = {'mems': mems}
+#             yield torch.log_softmax(log_probs, dim=-1), y
 
-    evaluate(experiment, log_probs_generator, model,
-             test_data, batch_size=batch_size, bptt=seq_len)
+#     evaluate(experiment, log_probs_generator, model,
+#              test_data, batch_size=batch_size, bptt=seq_len)
 
-def evaluate_xlnet_base(wikitext103_testset):
-    _evaluate_xlnet(wikitext103_testset,
-                    model_name="XLNet-base-cased",
-                    model_description="12-layer, 768-hidden, 12-heads, 110M parameters."
-                    )
+# def evaluate_xlnet_base(wikitext103_testset):
+#     _evaluate_xlnet(wikitext103_testset,
+#                     model_name="XLNet-base-cased",
+#                     model_description="12-layer, 768-hidden, 12-heads, 110M parameters."
+#                     )
 
 
-def evaluate_xlnet_large(wikitext103_testset):
-    _evaluate_xlnet(wikitext103_testset,
-                    model_name="XLNet-large-cased",
-                    model_description="24-layer, 1024-hidden, 16-heads, 340M parameters."
-                    )
+# def evaluate_xlnet_large(wikitext103_testset):
+#     _evaluate_xlnet(wikitext103_testset,
+#                     model_name="XLNet-large-cased",
+#                     model_description="24-layer, 1024-hidden, 16-heads, 340M parameters."
+#                     )
 #xlnet-large-cased
 evaluators, evaluator_names = list(zip(*[(v, n.replace("evaluate_", ""))
                                     for n, v in globals().items() if n.startswith('evaluate_')]))
@@ -276,6 +293,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-#%%
