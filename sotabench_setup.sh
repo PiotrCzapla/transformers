@@ -20,8 +20,9 @@ mkdir -p $SOTABENCH/data
 cd $SOTABENCH/data
 ls
 find $REPO/.data
-[ -d wikitext-103 ] || unzip  $REPO/.data/nlp/wiki-text-103/wikitext-103-v1.zip
-[ -d wikitext-2 ] || unzip  $REPO/.data/nlp/wiki-text-103/wikitext-103-v1.zip
+/workspace/repository/
+[ -d wikitext-103 ] || unzip  $REPO/.data/nlp/wikitext-103/wikitext-103-v1.zip
+[ -d wikitext-2 ] || unzip  $REPO/.data/nlp/wikitext-2/wikitext-2-v1.zip
 
 pip install ftfy==4.4.3
 pip install spacy
