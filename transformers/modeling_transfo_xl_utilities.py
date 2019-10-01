@@ -95,7 +95,7 @@ class ProjectedAdaptiveLogSoftmax(nn.Module):
                 hidden :: [len*bsz x d_proj]
                 labels :: [len*bsz]
             Return:
-                if labels is None:
+                if labels is not None:
                     out :: [len*bsz] Negative log likelihood
                 else:
                     out :: [len*bsz x n_tokens] log probabilities of tokens over the vocabulary
