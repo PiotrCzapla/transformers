@@ -222,32 +222,43 @@ def setup_xlnet(model_name):
     return model, tokenizer
 
 
-def evaluate_xlnet_base(wikitext103_testset):
+def _evaluate_xlnet(wikitext103_testset, model_name, model_description, pretrained_name=None, batch_size=1):
     experiment = WikiText103Eval(
-        model_name="XLNet-base-cased",
+        model_name=model_name,
         paper_arxiv_id="...",
         paper_pwc_id="...",
-        model_description="12-layer, 768-hidden, 12-heads, 110M parameters.",
+        model_description=model_description,
         text_transformation=True,
-        subword_tokenization = True,
-      
-    )
-    model, tokenizer = setup_gpt("openai-gpt")
+        subword_tokenization=True,
 
-    seq_len = tokenizer.max_len
-    print("Seq_len", seq_len)
+    )
+    model, tokenizer = setup_xlnet(pretrained_name or model_name.lower())
+
+    seq_len = 512
     tokenizer.max_len = 2**62
     fixes = [fix_moses, fix_header, fix_unk('[unknown]')]
     test_data = tokenizer.encode(preprocess_text(wikitext103_testset, fixes))
 
     def log_probs_generator(model, data_iter):
         for x, y in data_iter:
-            logits, *_ = model(input_ids=x)
-            yield torch.log_softmax(logits, dim=-1), y
+            neglog_prob, *_ = model(input_ids=x)
+            yield neglog_prob, y
 
     evaluate(experiment, log_probs_generator, model,
-             test_data,  batch_size=8, bptt=seq_len)
+             test_data, batch_size=batch_size, bptt=seq_len)
 
+def evaluate_xlnet_base(wikitext103_testset):
+    _evaluate_xlnet(wikitext103_testset,
+                    model_name="XLNet-base-cased",
+                    model_description="12-layer, 768-hidden, 12-heads, 110M parameters."
+                    )
+
+
+def evaluate_xlnet_large(wikitext103_testset):
+    _evaluate_xlnet(wikitext103_testset,
+                    model_name="XLNet-large-cased",
+                    model_description="24-layer, 1024-hidden, 16-heads, 340M parameters."
+                    )
 #xlnet-large-cased
 evaluators, evaluator_names = list(zip(*[(v, n.replace("evaluate_", ""))
                                     for n, v in globals().items() if n.startswith('evaluate_')]))
