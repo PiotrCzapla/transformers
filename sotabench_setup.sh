@@ -1,3 +1,9 @@
+#!/usr/bin/env bash
+source /workspace/venv/bin/activate
+PYTHON=${PYTHON:-"python"}
+
+apt-get git
+
 echo Running temporary setup scripts
 cd ~
 SOTABENCH=~/.cache/sotabench
@@ -9,11 +15,7 @@ git pull
 pip install -e .
 pip install torch
 
-cd $SOTABENCH
-mkdir -p data
-cd data
-[ -f wikitext-103-v1.zip ] || wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-103-v1.zip
-[ -f wikitext-2-v1.zip ] || wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip
-
-[ -d wikitext-2 ] || unzip wikitext-2-v1.zip
-[ -d wikitext-103 ] || unzip wikitext-103-v1.zip
+apt-get unzip
+cd $SOTABENCH/data
+[-d wikitext-103] || unzip  /.data/nlp/wiki-text-103/wikitext-103-v1.zip
+[-d wikitext-2] || unzip  /.data/nlp/wiki-text-103/wikitext-103-v1.zip
