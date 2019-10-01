@@ -7,6 +7,7 @@ git clone https://github.com/PiotrCzapla/sotabench-eval.git
 cd sotabench-eval
 git pull
 pip install -e .
+pip install torch
 
 cd $SOTABENCH
 mkdir -p data
