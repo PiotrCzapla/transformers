@@ -138,19 +138,21 @@ def fix_unk(replacement):
 def preprocess_text(lines, fixes=[]):
     return "".join(reduce(lambda v, f: f(v), fixes, l) for l in lines)
 
-def evaluate_gpt2_small(wikitext103_testset):
+
+def _evaluate_gpt2(wikitext103_testset, model_name, model_description, pretrained_name=None):
     experiment = WikiText103Eval(
-        model_name="GPT2-small",
+        model_name=model_name,
         paper_pwc_id="language-models-are-unsupervised-multitask",
-        model_description="OpenAI GPT2-small: 12-layer, 768-hidden, 12-heads, 117M parameters.",
+        model_description=model_description,
         text_transformation = True,
         subword_tokenization = True,
         #expected perplexity: 37.50, our: 36.49 ( or better if we predict 1 word at a time )
     )
 
-    model, tokenizer = setup_gpt2("gpt2")
+    model, tokenizer = setup_gpt2(pretrained_name or model_name.lower())
     
     fixes = [fix_moses, fix_header, fix_unk('[unknown]')]
+    seq_len = tokenizer.max_len
     tokenizer.max_len = 2**62
     test_data = tokenizer.encode(preprocess_text(wikitext103_testset, fixes))
     
@@ -159,8 +161,28 @@ def evaluate_gpt2_small(wikitext103_testset):
             logits, *_ = model(input_ids=x)
             yield torch.log_softmax(logits, dim=-1), y
     
-    evaluate(experiment, log_probs_generator, model, test_data,  batch_size=8, bptt=1024)
+    evaluate(experiment, log_probs_generator, model,
+             test_data,  batch_size=8, bptt=seq_len)
 
+
+def evaluate_gpt2_small(wikitext103_testset):
+    return _evaluate_gpt2(wikitext103_testset,
+                   model_name="GPT2-small",
+                   pretrained_name="gpt2",
+                   model_description="OpenAI GPT2-small: 12-layer, 768-hidden, 12-heads, 117M parameters."
+    )
+
+def evaluate_gpt2_medium(wikitext103_testset):
+    return _evaluate_gpt2(wikitext103_testset,
+                          model_name="GPT2-medium",                          
+                          model_description="OpenAI GPT2-medium: 24-layer, 1024-hidden, 16-heads, 345M parameters."
+    )
+
+
+def evaluate_gpt2_large(wikitext103_testset):
+    return _evaluate_gpt2(wikitext103_testset,
+                          model_name="GPT2-large",
+                          model_description="OpenAI GPT2-large: 36-layer, 1280-hidden, 20-heads, 774M parameters.")
 ## GPT1
 
 def setup_gpt(model_name="openai-gpt"):
@@ -168,27 +190,29 @@ def setup_gpt(model_name="openai-gpt"):
     tokenizer = OpenAIGPTTokenizer.from_pretrained(model_name)
     return model, tokenizer
 
-def evaluate_gpt(wikitext103_testset):
+def evaluate_gpt1(wikitext103_testset):
     experiment = WikiText103Eval(
         model_name="GPT",
         paper_pwc_id="",
-        model_description="OpenAI GPT: 12-layer, 768-hidden, 12-heads, 110M parameters.",
+        model_description="Zeroshoot original OpenAI GPT: 12-layer, 768-hidden, 12-heads, 110M parameters.",
         text_transformation=True,
         subword_tokenization = True,
     )
 
     model, tokenizer = setup_gpt("openai-gpt")
 
-    # fixes = [fix_moses, fix_header, fix_unk('[unknown]')]
-    # test_data = tokenizer.encode(preprocess_text(wikitext103_testset, fixes))
+    seq_len = tokenizer.max_len
+    tokenizer.max_len = 2**62
+    fixes = [fix_moses, fix_header, fix_unk('[unknown]')]
+    test_data = tokenizer.encode(preprocess_text(wikitext103_testset, fixes))
 
-    # def log_probs_generator(model, data_iter):
-    #     for x, y in data_iter:
-    #         logits, *_ = model(input_ids=x)
-    #         yield torch.log_softmax(logits), y
+    def log_probs_generator(model, data_iter):
+        for x, y in data_iter:
+            logits, *_ = model(input_ids=x)
+            yield torch.log_softmax(logits, dim=-1), y
 
-    # evaluate(experiment, log_probs_generator,
-    #          test_data,  batch_size=8, bptt=128)
+    evaluate(experiment, log_probs_generator, model,
+             test_data,  batch_size=8, bptt=seq_len)
 
 ## XLNet
 def setup_xlnet(model_name):

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash -x
 source /workspace/venv/bin/activate
 PYTHON=${PYTHON:-"python"}
-
+REPO=$(dirname $0)
 apt-get install -y git
 
 echo Running temporary setup scripts
@@ -19,6 +19,10 @@ apt-get install -y unzip
 mkdir -p $SOTABENCH/data
 cd $SOTABENCH/data
 ls
-find /.data
-[ -d wikitext-103 ] || unzip  /.data/nlp/wiki-text-103/wikitext-103-v1.zip
-[ -d wikitext-2 ] || unzip  /.data/nlp/wiki-text-103/wikitext-103-v1.zip
+find $REPO/.data
+[ -d wikitext-103 ] || unzip  $REPO/.data/nlp/wiki-text-103/wikitext-103-v1.zip
+[ -d wikitext-2 ] || unzip  $REPO/.data/nlp/wiki-text-103/wikitext-103-v1.zip
+
+pip install ftfy==4.4.3
+pip install spacy
+python -m spacy download en
