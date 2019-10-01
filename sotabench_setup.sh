@@ -1,7 +1,7 @@
 #!/usr/bin/env bash -x
 source /workspace/venv/bin/activate
 PYTHON=${PYTHON:-"python"}
-REPO=$(dirname $0)
+REPO="$( cd "$(dirname "$0")" ; pwd -P )"
 apt-get install -y git
 
 echo Running temporary setup scripts

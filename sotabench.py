@@ -139,7 +139,7 @@ def preprocess_text(lines, fixes=[]):
     return "".join(reduce(lambda v, f: f(v), fixes, l) for l in lines)
 
 
-def _evaluate_gpt2(wikitext103_testset, model_name, model_description, pretrained_name=None):
+def _evaluate_gpt2(wikitext103_testset, model_name, model_description, pretrained_name=None, batch_size=8):
     experiment = WikiText103Eval(
         model_name=model_name,
         paper_pwc_id="language-models-are-unsupervised-multitask",
@@ -162,7 +162,7 @@ def _evaluate_gpt2(wikitext103_testset, model_name, model_description, pretraine
             yield torch.log_softmax(logits, dim=-1), y
     
     evaluate(experiment, log_probs_generator, model,
-             test_data,  batch_size=8, bptt=seq_len)
+             test_data,  batch_size=batch_size, bptt=seq_len)
 
 
 def evaluate_gpt2_small(wikitext103_testset):
@@ -182,7 +182,8 @@ def evaluate_gpt2_medium(wikitext103_testset):
 def evaluate_gpt2_large(wikitext103_testset):
     return _evaluate_gpt2(wikitext103_testset,
                           model_name="GPT2-large",
-                          model_description="OpenAI GPT2-large: 36-layer, 1280-hidden, 20-heads, 774M parameters.")
+                          model_description="OpenAI GPT2-large: 36-layer, 1280-hidden, 20-heads, 774M parameters.",
+                          batch_size=1)
 ## GPT1
 
 def setup_gpt(model_name="openai-gpt"):
@@ -231,6 +232,21 @@ def evaluate_xlnet_base(wikitext103_testset):
         subword_tokenization = True,
       
     )
+    model, tokenizer = setup_gpt("openai-gpt")
+
+    seq_len = tokenizer.max_len
+    print("Seq_len", seq_len)
+    tokenizer.max_len = 2**62
+    fixes = [fix_moses, fix_header, fix_unk('[unknown]')]
+    test_data = tokenizer.encode(preprocess_text(wikitext103_testset, fixes))
+
+    def log_probs_generator(model, data_iter):
+        for x, y in data_iter:
+            logits, *_ = model(input_ids=x)
+            yield torch.log_softmax(logits, dim=-1), y
+
+    evaluate(experiment, log_probs_generator, model,
+             test_data,  batch_size=8, bptt=seq_len)
 
 #xlnet-large-cased
 evaluators, evaluator_names = list(zip(*[(v, n.replace("evaluate_", ""))
