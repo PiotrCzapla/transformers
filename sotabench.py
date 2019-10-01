@@ -213,6 +213,10 @@ evaluators, evaluator_names = list(zip(*[(v, n.replace("evaluate_", ""))
                                     for n, v in globals().items() if n.startswith('evaluate_')]))
 
 def main():
+    import subprocess, os
+    subprocess.run("bash ./sotabench-setup.sh",  shell=True,
+                   cwd=os.path.dirname(__file__))
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default=None, type=str, required=False,
                         help="Model to evaulate %s" % str(evaluator_names))
