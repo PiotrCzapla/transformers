@@ -284,8 +284,8 @@ def main():
     
     dataset, examples, features = load_and_cache_examples(
         args, tokenizer, evaluate=True, output_examples=True)
-    file_path = evaluate(args, model, tokenizer,  dataset, examples, features, one_batch=True, prefix='one_batch', run_eval=False)
-    submission.add(collect_answers(file_path))
+    # file_path = evaluate(args, model, tokenizer,  dataset, examples, features, one_batch=True, prefix='one_batch', run_eval=False)
+    # submission.add(collect_answers(file_path))
     # if submission.cache_exists:
     #     logger.info("Cache not found resetting and run on the full dataset")
     #     args.force_full_run = True
