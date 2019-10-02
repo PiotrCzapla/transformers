@@ -31,8 +31,6 @@ from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm, trange
 
-from tensorboardX import SummaryWriter
-
 from transformers import (WEIGHTS_NAME, BertConfig,
                           BertForQuestionAnswering, BertTokenizer,
                           XLMConfig, XLMForQuestionAnswering,
