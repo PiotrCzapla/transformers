@@ -1,5 +1,4 @@
 #%%
-import argparse
 import logging
 import re
 import sys
@@ -13,8 +12,7 @@ import torch.nn.functional as F
 from sacremoses import MosesDetokenizer, MosesTokenizer
 from tqdm import tqdm
 
-from sotabencheval.language_modeling.wikitext import (WikiText103Eval,
-                                                      perplexity_evauluate)
+from sotabencheval.language_modeling.wikitext import WikiText103Eval
 from transformers import (GPT2Config, GPT2LMHeadModel, GPT2Tokenizer,
                           OpenAIGPTConfig, OpenAIGPTLMHeadModel,
                           OpenAIGPTTokenizer, TransfoXLConfig, TransfoXLCorpus,
@@ -217,9 +215,10 @@ def evaluate_gpt1(wikitext103_testset):
              test_data,  batch_size=8, bptt=seq_len)
 
 evaluators, evaluator_names = list(zip(*[(v, n.replace("evaluate_", ""))
-                                    for n, v in globals().items() if n.startswith('evaluate_')]))
+                                         for n, v in globals().items() if n.startswith('evaluate_')]))
 
 def main():
+    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default=None, type=str, required=False,
                         help="Model to evaulate %s" % str(evaluator_names))
@@ -230,5 +229,3 @@ def main():
             print("Running", evaluator.__name__)
             evaluator(wikitext103_testset)
 
-if __name__ == '__main__':
-    main()
