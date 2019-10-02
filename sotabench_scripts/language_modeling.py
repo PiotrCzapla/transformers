@@ -168,6 +168,7 @@ def evaluate_gpt2_small(wikitext103_testset):
 def evaluate_gpt2_medium(wikitext103_testset):
     return _evaluate_gpt2(wikitext103_testset,
                           model_name="GPT-2 Medium",
+                          pretrained_name="gpt2-medium"
                           # expected: 26.37
     )
 
@@ -175,6 +176,7 @@ def evaluate_gpt2_medium(wikitext103_testset):
 def evaluate_gpt2_large(wikitext103_testset):
     return _evaluate_gpt2(wikitext103_testset,
                           model_name="GPT-2 Large",
+                          pretrained_name="gpt2-large",
                           batch_size=1
                           # expected: 22.05
     )
