@@ -254,8 +254,7 @@ def main():
 
     submission = SQuADSubmission(
         local_root=Path.home()/".cache/sotabench/data/squad/",
-        model_name='BERT large',
-        model_description='whole word masking, uncased',
+        model_name='BERT large (whole word masking, uncased)',
         version=SQuADVersion.V11
     )
     
@@ -287,19 +286,25 @@ def main():
         args, tokenizer, evaluate=True, output_examples=True)
     file_path = evaluate(args, model, tokenizer,  dataset, examples, features, one_batch=True, prefix='one_batch', run_eval=False)
     submission.add(collect_answers(file_path))
-    if submission.cache_exists:
-        logger.info("Cache not found resetting and run on the full dataset")
-        args.force_full_run = True
+    # if submission.cache_exists:
+    #     logger.info("Cache not found resetting and run on the full dataset")
+    #     args.force_full_run = True
 
-    if args.force_full_run:
-        logger.info("Reset submission and rerunt on the full dataset")
-        submission.reset()
-        file_path = evaluate(args, model, tokenizer, dataset, examples, features,
-                 one_batch=False, prefix='predictions_full')
-        submission.add(collect_answers(file_path))
+    # if args.force_full_run:
+    #     logger.info("Reset submission and rerunt on the full dataset")
+    #     submission.reset()
+    file_path = evaluate(args, model, tokenizer, dataset, examples, features,
+                one_batch=False, prefix='predictions_full')
+    submission.add(collect_answers(file_path))
 
     results = submission.save()
     logger.info("Accuracy on full dataset: " + repr(results.to_dict()))
 
 if __name__ == "__main__":
     main()
+
+"""models to eval:
+distilbert-base-uncased-distilled-squad
+bert-large-cased-whole-word-masking-finetuned-squad
+bert-large-uncased-whole-word-masking-finetuned-squad
+"""
