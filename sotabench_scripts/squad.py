@@ -233,7 +233,7 @@ def main():
     args.model_name = 'bert-large-uncased-whole-word-masking-finetuned-squad'
     args.do_lower_case = True
 
-
+    args.force_full_run = False
     args.doc_stride = 128
     args.fp16 = False
     args.fp16_opt_level = 'O1'
