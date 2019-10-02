@@ -1,4 +1,3 @@
-#%%
 import logging
 import re
 import sys
@@ -86,7 +85,7 @@ def setup_transfo_xl(model_name):
 
 def evaluate_transfo_xl(wikitext103_testset):
     experiment = WikiText103Eval(
-        model_name="transfo-xl",
+        model_name="Transformer-XL Large",
         paper_arxiv_id="1901.02860",
         paper_pwc_id="transformer-xl-attentive-language-models",
         model_description="English model trained on wikitext-103: 18-layer, 1024-hidden, 16-heads, 257M parameters.",
@@ -134,7 +133,7 @@ def preprocess_text(lines, fixes=[]):
     return "".join(reduce(lambda v, f: f(v), fixes, l) for l in lines)
 
 
-def _evaluate_gpt2(wikitext103_testset, model_name, model_description, pretrained_name=None, batch_size=8):
+def _evaluate_gpt2(wikitext103_testset, model_name, model_description=None, pretrained_name=None, batch_size=8):
     experiment = WikiText103Eval(
         model_name=model_name,
         paper_pwc_id="language-models-are-unsupervised-multitask",
@@ -162,23 +161,20 @@ def _evaluate_gpt2(wikitext103_testset, model_name, model_description, pretraine
 
 def evaluate_gpt2_small(wikitext103_testset):
     return _evaluate_gpt2(wikitext103_testset,
-                   model_name="GPT2-small",
-                   pretrained_name="gpt2",
-                   model_description="OpenAI GPT2-small: 12-layer, 768-hidden, 12-heads, 117M parameters."
+                          model_name="GPT-2 Small",
+                          pretrained_name="gpt2",
     )
 
 def evaluate_gpt2_medium(wikitext103_testset):
     return _evaluate_gpt2(wikitext103_testset,
-                          model_name="GPT2-medium",                          
-                          model_description="OpenAI GPT2-medium: 24-layer, 1024-hidden, 16-heads, 345M parameters."
+                          model_name="GPT-2 Medium",
                           # expected: 26.37
     )
 
 
 def evaluate_gpt2_large(wikitext103_testset):
     return _evaluate_gpt2(wikitext103_testset,
-                          model_name="GPT2-large",
-                          model_description="OpenAI GPT2-large: 36-layer, 1280-hidden, 20-heads, 774M parameters.",
+                          model_name="GPT-2 Large",
                           batch_size=1
                           # expected: 22.05
     )
@@ -192,9 +188,8 @@ def setup_gpt(model_name="openai-gpt"):
 
 def evaluate_gpt1(wikitext103_testset):
     experiment = WikiText103Eval(
-        model_name="GPT",
+        model_name="GPT1",
         paper_pwc_id="",
-        model_description="Zeroshoot on Wikipedia OpenAI GPT v1: 12-layer, 768-hidden, 12-heads, 110M parameters.",
         text_transformation=True,
         subword_tokenization = True,
     )

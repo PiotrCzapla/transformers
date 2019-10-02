@@ -254,7 +254,8 @@ def main():
 
     submission = SQuADSubmission(
         local_root=Path.home()/".cache/sotabench/data/squad/",
-        model_name=args.model_name,
+        model_name='BERT large',
+        model_description='whole word masking, uncased',
         version=SQuADVersion.V11
     )
     
