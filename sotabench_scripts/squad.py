@@ -47,11 +47,6 @@ from utils_squad import (read_squad_examples, convert_examples_to_features,
                          RawResult, write_predictions,
                          RawResultExtended, write_predictions_extended)
 
-# The follwing import is the official SQuAD evaluation script (2.0).
-# You can remove it from the dependencies if you are using this script outside of the library
-# We've added it here for automated tests (see examples/test_examples.py file)
-from utils_squad_evaluate import EVAL_OPTS, main as evaluate_on_squad
-
 from sotabencheval.question_answering import SQuADSubmission, SQuADVersion
 
 logger = logging.getLogger(__name__)
@@ -164,15 +159,7 @@ def evaluate(args, model, tokenizer,  dataset, examples, features, one_batch=Fal
                           output_nbest_file, output_null_log_odds_file, args.verbose_logging,
                           args.version_2_with_negative, args.null_score_diff_threshold)
 
-    if run_eval:
-        # Evaluate with the official SQuAD script
-        evaluate_options = EVAL_OPTS(data_file=args.predict_file,
-                                    pred_file=output_prediction_file,
-                                    na_prob_file=output_null_log_odds_file)
-        results = evaluate_on_squad(evaluate_options)
-        return results
-    else:
-        return output_prediction_file
+    return output_prediction_file
 
 def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=False):
     
