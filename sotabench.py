@@ -1,28 +1,25 @@
 #%%
-import sys
-import re
-from itertools import islice
-from functools import reduce
 import argparse
 import logging
+import re
+import sys
+from functools import reduce
+from itertools import islice
 from pathlib import Path
 
-from sacremoses import MosesTokenizer, MosesDetokenizer
-from tqdm import tqdm
 import numpy as np
-
 import torch
 import torch.nn.functional as F
-import numpy as np
+from sacremoses import MosesDetokenizer, MosesTokenizer
+from tqdm import tqdm
 
-from transformers import GPT2Config, OpenAIGPTConfig, XLNetConfig, TransfoXLConfig
-
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-from transformers import OpenAIGPTLMHeadModel, OpenAIGPTTokenizer
-from transformers import XLNetLMHeadModel, XLNetTokenizer
-from transformers import TransfoXLLMHeadModel, TransfoXLTokenizer, TransfoXLCorpus
-
-from sotabencheval.language_modeling.wikitext import WikiText103Eval, perplexity_evauluate
+from sotabencheval.language_modeling.wikitext import (WikiText103Eval,
+                                                      perplexity_evauluate)
+from transformers import (GPT2Config, GPT2LMHeadModel, GPT2Tokenizer,
+                          OpenAIGPTConfig, OpenAIGPTLMHeadModel,
+                          OpenAIGPTTokenizer, TransfoXLConfig, TransfoXLCorpus,
+                          TransfoXLLMHeadModel, TransfoXLTokenizer,
+                          XLNetConfig, XLNetLMHeadModel, XLNetTokenizer)
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
@@ -187,6 +184,7 @@ def evaluate_gpt2_large(wikitext103_testset):
                           batch_size=1
                           # expected: 22.05
     )
+
 ## GPT1
 
 def setup_gpt(model_name="openai-gpt"):
@@ -218,65 +216,6 @@ def evaluate_gpt1(wikitext103_testset):
     evaluate(experiment, log_probs_generator, model,
              test_data,  batch_size=8, bptt=seq_len)
 
-# ## XLNet
-# def setup_xlnet(model_name):
-#     model = XLNetLMHeadModel.from_pretrained(model_name)
-#     tokenizer = XLNetTokenizer.from_pretrained(model_name)
-#     return model, tokenizer
-
-
-# def _evaluate_xlnet(wikitext103_testset, model_name, model_description, pretrained_name=None, batch_size=10):
-#     experiment = WikiText103Eval(
-#         model_name=model_name,
-#         paper_arxiv_id="1906.08237v1",
-#         paper_pwc_id="xlnet-generalized-autoregressive-pretraining",
-#         model_description=model_description,
-#         text_transformation=True,
-#         subword_tokenization=True,
-
-#     )
-#     model, tokenizer = setup_xlnet(pretrained_name or model_name.lower())
-
-#     seq_len = 512
-#     tokenizer.max_len = 2**62
-#     fixes = [fix_moses, fix_header, fix_unk('[unknown]')]
-#     test_data = tokenizer.encode(preprocess_text(wikitext103_testset, fixes))
-
-#     def log_probs_generator(model, data_iter):
-#         past = {}
-#         # inputs = {'input_ids': input_ids, 'perm_mask': perm_mask, 'target_mapping': target_mapping}
-#         for x, y in data_iter:
-#             # # XLNet is a direct (predict same token, not next token) and bi-directional model by default
-#             # # => need one additional dummy token in the input (will be masked), attention mask and target mapping (see model docstring)
-#             #TODO: figure out how to predict lager amount of tokens than one
-#             input_ids = torch.cat(
-#                 (x, torch.zeros((1, 1), dtype=torch.long, device='cuda')), dim=1)
-#             perm_mask = torch.zeros(
-#                 (1, input_ids.shape[1], input_ids.shape[1]), dtype=torch.float, device='cuda')
-#             perm_mask[:, :, -1] = 1.0  # Previous tokens don't see last token
-#             target_mapping = torch.zeros((1, 1, input_ids.shape[1]), dtype=torch.float, device=device)
-#             target_mapping[0, 0, -1] = 1.0  # predict last token
-#             log_probs, mems, * \
-#                 _ = model(input_ids=input_ids, perm_mask=perm_mask, ** past)
-#             past = {'mems': mems}
-#             yield torch.log_softmax(log_probs, dim=-1), y
-
-#     evaluate(experiment, log_probs_generator, model,
-#              test_data, batch_size=batch_size, bptt=seq_len)
-
-# def evaluate_xlnet_base(wikitext103_testset):
-#     _evaluate_xlnet(wikitext103_testset,
-#                     model_name="XLNet-base-cased",
-#                     model_description="12-layer, 768-hidden, 12-heads, 110M parameters."
-#                     )
-
-
-# def evaluate_xlnet_large(wikitext103_testset):
-#     _evaluate_xlnet(wikitext103_testset,
-#                     model_name="XLNet-large-cased",
-#                     model_description="24-layer, 1024-hidden, 16-heads, 340M parameters."
-#                     )
-#xlnet-large-cased
 evaluators, evaluator_names = list(zip(*[(v, n.replace("evaluate_", ""))
                                     for n, v in globals().items() if n.startswith('evaluate_')]))
 
