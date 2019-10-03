@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from sacremoses import MosesDetokenizer, MosesTokenizer
 from tqdm import tqdm
 
-from sotabencheval.language_modeling.wikitext import WikiText103Eval
+from sotabencheval.language_modeling.wikitext import WikiText103Evaluator
 from transformers import (GPT2Config, GPT2LMHeadModel, GPT2Tokenizer,
                           OpenAIGPTConfig, OpenAIGPTLMHeadModel,
                           OpenAIGPTTokenizer, TransfoXLConfig, TransfoXLCorpus,
@@ -38,8 +38,8 @@ def iterate_over_batches(data, bs, bptt):
     Y = data[None, batched_size+1:]
     yield from zip(batched(X, bptt), batched(Y, bptt))
 
-def read_wiki():
-    with (Path.home() / '.cache/sotabench/data/wikitext-103/wiki.test.tokens').open() as f:
+def read_wiki(path):
+    with path.open() as f:
         return f.readlines()
 
 def evaluate(experiemnt, log_probs_generator, model, test_data, batch_size=8, bptt=128, device='cuda'):
@@ -84,7 +84,7 @@ def setup_transfo_xl(model_name):
     return model, tokenizer
 
 def evaluate_transfo_xl(wikitext103_testset):
-    experiment = WikiText103Eval(
+    experiment = WikiText103Evaluator(
         model_name="Transformer-XL Large",
         paper_arxiv_id="1901.02860",
         paper_pwc_id="transformer-xl-attentive-language-models",
@@ -134,7 +134,7 @@ def preprocess_text(lines, fixes=[]):
 
 
 def _evaluate_gpt2(wikitext103_testset, model_name, model_description=None, pretrained_name=None, batch_size=8):
-    experiment = WikiText103Eval(
+    experiment = WikiText103Evaluator(
         model_name=model_name,
         paper_pwc_id="language-models-are-unsupervised-multitask",
         model_description=model_description,
@@ -189,7 +189,7 @@ def setup_gpt(model_name="openai-gpt"):
     return model, tokenizer
 
 def evaluate_gpt1(wikitext103_testset):
-    experiment = WikiText103Eval(
+    experiment = WikiText103Evaluator(
         model_name="GPT1",
         paper_pwc_id="",
         text_transformation=True,
@@ -220,7 +220,8 @@ def main():
     parser.add_argument("--model", default=None, type=str, required=False,
                         help="Model to evaulate %s" % str(evaluator_names))
     args = parser.parse_args()
-    wikitext103_testset = read_wiki()
+    
+    wikitext103_testset = read_wiki(WikiText103Evaluator.dataset.get_path(local_root=Path.home() / '.cache/sotabench/data/wikitext-103'))
     for evaluator in evaluators:
         if (args.model or "") in evaluator.__name__:
             print("Running", evaluator.__name__)

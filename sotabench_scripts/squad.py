@@ -45,7 +45,7 @@ from .utils_squad import (read_squad_examples, convert_examples_to_features,
                          RawResult, write_predictions,
                          RawResultExtended, write_predictions_extended)
 
-from sotabencheval.question_answering import SQuADSubmission, SQuADVersion
+from sotabencheval.question_answering import SQuADEvaluator, SQuADVersion
 
 logger = logging.getLogger(__name__)
 
@@ -252,13 +252,13 @@ def main():
     args.verbose_logging = True
     args.version_2_with_negative = False
 
-    submission = SQuADSubmission(
+    evaluator = SQuADEvaluator(
         local_root=Path.home()/".cache/sotabench/data/squad/",
         model_name='BERT large (whole word masking, uncased)',
         version=SQuADVersion.V11
     )
     
-    args.predict_file = submission.dataset_path
+    args.predict_file = evaluator.dataset_path
 
     args.output_dir = "/tmp/squad"
     args.device = "cuda"
@@ -285,20 +285,20 @@ def main():
     dataset, examples, features = load_and_cache_examples(
         args, tokenizer, evaluate=True, output_examples=True)
     # file_path = evaluate(args, model, tokenizer,  dataset, examples, features, one_batch=True, prefix='one_batch', run_eval=False)
-    # submission.add(collect_answers(file_path))
-    # if submission.cache_exists:
+    # evaluator.add(collect_answers(file_path))
+    # if not evaluator.cache_exists:
     #     logger.info("Cache not found resetting and run on the full dataset")
     #     args.force_full_run = True
 
     # if args.force_full_run:
-    #     logger.info("Reset submission and rerunt on the full dataset")
-    #     submission.reset()
+    #     logger.info("Reset evaluator and rerunt on the full dataset")
+    #     evaluator.reset()
     file_path = evaluate(args, model, tokenizer, dataset, examples, features,
                 one_batch=False, prefix='predictions_full')
-    submission.add(collect_answers(file_path))
+    evaluator.add(collect_answers(file_path))
 
-    results = submission.save()
-    logger.info("Accuracy on full dataset: " + repr(results.to_dict()))
+    results = evaluator.save()
+    logger.info("Accuracy on full dataset: " + repr(evaluator.results))
 
 if __name__ == "__main__":
     main()
