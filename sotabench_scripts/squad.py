@@ -220,7 +220,7 @@ def collect_answers(json_file):
         return json.load(f)
     
 
-def evaluate(model_name, pretrained_weights, cased=False, arxiv_id=None):
+def run_evaluation(model_name, pretrained_weights, cased=False, arxiv_id=None):
     # parser = argparse.ArgumentParser()
     # parser.add_argument("--model_name", default=None, type=str, required=False,
     #                     help="Which models should we evaluate on")
@@ -303,14 +303,14 @@ def evaluate(model_name, pretrained_weights, cased=False, arxiv_id=None):
     logger.info("Accuracy on full dataset: " + repr(evaluator.results))
 
 def main():
-    evaluate('BERT large (whole word masking, uncased)',
-             'bert-large-uncased-whole-word-masking-finetuned-squad')
-    evaluate('BERT large (whole word masking, cased)',
-             'bert-large-uncased-whole-word-masking-finetuned-squad',
-             cased=True)
-    evaluate('DistilBERT',
-             'distilbert-base-uncased-distilled-squad',
-             arxiv_id='1910.01108')
+    run_evaluation('BERT large (whole word masking, uncased)',
+                    'bert-large-uncased-whole-word-masking-finetuned-squad')
+    run_evaluation('BERT large (whole word masking, cased)',
+                   'bert-large-uncased-whole-word-masking-finetuned-squad',
+                    cased=True)
+    run_evaluation('DistilBERT',
+                    'distilbert-base-uncased-distilled-squad',
+                    arxiv_id='1910.01108')
 
 if __name__ == "__main__":
     main()
