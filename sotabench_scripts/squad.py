@@ -219,7 +219,8 @@ def collect_answers(json_file):
     with open(json_file, 'r') as f:
         return json.load(f)
     
-def main():
+
+def evaluate(model_name, pretrained_weights, cased=False, arxiv_id=None):
     # parser = argparse.ArgumentParser()
     # parser.add_argument("--model_name", default=None, type=str, required=False,
     #                     help="Which models should we evaluate on")
@@ -228,8 +229,8 @@ def main():
     # args = parser.parse_args()
     
     args = argparse.Namespace()
-    args.model_name = 'bert-large-uncased-whole-word-masking-finetuned-squad'
-    args.do_lower_case = True
+    args.model_name = pretrained_weights
+    args.do_lower_case = not cased
 
     args.force_full_run = False
     args.doc_stride = 128
@@ -254,8 +255,9 @@ def main():
 
     evaluator = SQuADEvaluator(
         local_root=Path.home()/".cache/sotabench/data/squad/",
-        model_name='BERT large (whole word masking, uncased)',
-        version=SQuADVersion.V11
+        model_name=model_name,
+        version=SQuADVersion.V11,
+        paper_arxiv_id=arxiv_id
     )
     
     args.predict_file = evaluator.dataset_path
@@ -284,27 +286,31 @@ def main():
     
     dataset, examples, features = load_and_cache_examples(
         args, tokenizer, evaluate=True, output_examples=True)
-    # file_path = evaluate(args, model, tokenizer,  dataset, examples, features, one_batch=True, prefix='one_batch', run_eval=False)
-    # evaluator.add(collect_answers(file_path))
-    # if not evaluator.cache_exists:
-    #     logger.info("Cache not found resetting and run on the full dataset")
-    #     args.force_full_run = True
-
-    # if args.force_full_run:
-    #     logger.info("Reset evaluator and rerunt on the full dataset")
-    #     evaluator.reset()
-    file_path = evaluate(args, model, tokenizer, dataset, examples, features,
-                one_batch=False, prefix='predictions_full')
+    file_path = evaluate(args, model, tokenizer,  dataset, examples, features, one_batch=True, prefix='one_batch', run_eval=False)
     evaluator.add(collect_answers(file_path))
+    if not evaluator.cache_exists:
+        logger.info("Cache not found resetting and run on the full dataset")
+        args.force_full_run = True
+
+    if args.force_full_run:
+        logger.info("Reset evaluator and rerun on the full dataset")
+        evaluator.reset()
+        file_path = evaluate(args, model, tokenizer, dataset, examples, features,
+                    one_batch=False, prefix='predictions_full')
+        evaluator.add(collect_answers(file_path))
 
     results = evaluator.save()
     logger.info("Accuracy on full dataset: " + repr(evaluator.results))
 
+def main():
+    evaluate('BERT large (whole word masking, uncased)',
+             'bert-large-uncased-whole-word-masking-finetuned-squad')
+    evaluate('BERT large (whole word masking, cased)',
+             'bert-large-uncased-whole-word-masking-finetuned-squad',
+             cased=True)
+    evaluate('DistilBERT',
+             'distilbert-base-uncased-distilled-squad',
+             arxiv_id='1910.01108')
+
 if __name__ == "__main__":
     main()
-
-"""models to eval:
-distilbert-base-uncased-distilled-squad
-bert-large-cased-whole-word-masking-finetuned-squad
-bert-large-uncased-whole-word-masking-finetuned-squad
-"""

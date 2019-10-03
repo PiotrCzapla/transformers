@@ -50,11 +50,8 @@ def evaluate(experiemnt, log_probs_generator, model, test_data, batch_size=8, bp
     with torch.no_grad():
         total_steps = len(test_data)//(batch_size*bptt)
         log_probs_generator_instance = log_probs_generator(model, data_iter)
-        for log_probs, y in tqdm(log_probs_generator_instance, total = total_steps):
-            experiemnt.add(log_probs, y)
-            #TODO batch caching
-        results = experiemnt.save()
-        print("Evaluation results:", results.to_dict()["results"])
+        experiemnt.eval(tqdm(log_probs_generator_instance, total = total_steps))
+        print("Evaluation results:", experiemnt.results)
         
 ## Transformers XL
 
