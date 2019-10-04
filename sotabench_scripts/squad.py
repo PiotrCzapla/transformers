@@ -94,11 +94,11 @@ def evaluate(args, model, tokenizer,  dataset, examples, features, one_batch=Fal
         model.eval()
         batch = tuple(t.to(args.device) for t in batch)
         with torch.no_grad():
-            inputs = {'input_ids':      batch[0],
-                      'attention_mask': batch[1],
-                      # XLM don't use segment_ids
-                      'token_type_ids': None if args.model_type == 'xlm' else batch[2]
-                      }
+            inputs = {'input_ids': batch[0], 'attention_mask': batch[1]}
+            # XLM & DistilBert don't use segment_ids
+            if args.model_type not in ['xlm', 'distilbert']:
+                inputs['token_type_ids'] = batch[2]
+            
             example_indices = batch[3]
             if args.model_type in ['xlnet', 'xlm']:
                 inputs.update({'cls_index': batch[4],
@@ -313,11 +313,11 @@ def main():
     run_evaluation('BERT large (whole word masking, cased)',
                    'bert-large-uncased-whole-word-masking-finetuned-squad',
                     cased=True)
-    # run_evaluation('DistilBERT',
-    #                 'distilbert-base-uncased-distilled-squad',
-    #                 model_type="distilbert",
-    #                 paper_pwc_id='distilbert-a-distilled-version-of-bert',
-    #                 paper_arxiv_id='1910.01108')
+    run_evaluation('DistilBERT',
+                    'distilbert-base-uncased-distilled-squad',
+                    model_type="distilbert",
+                    paper_pwc_id='distilbert-a-distilled-version-of-bert',
+                    paper_arxiv_id='1910.01108')
 
 if __name__ == "__main__":
     main()

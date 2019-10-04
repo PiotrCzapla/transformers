@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from sacremoses import MosesDetokenizer, MosesTokenizer
 from tqdm import tqdm
 
-from sotabencheval.language_modeling.wikitext import WikiText103Evaluator
+from sotabencheval.language_modelling.wikitext import WikiText103Evaluator
 from transformers import (GPT2Config, GPT2LMHeadModel, GPT2Tokenizer,
                           OpenAIGPTConfig, OpenAIGPTLMHeadModel,
                           OpenAIGPTTokenizer, TransfoXLConfig, TransfoXLCorpus,
