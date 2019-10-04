@@ -53,7 +53,7 @@ ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys())
                   for conf in (BertConfig, XLNetConfig, XLMConfig)), ())
 
 SQUAD_PRETRAINED='bert-large-uncased-whole-word-masking-finetuned-squad', 'bert-large-cased-whole-word-masking-finetuned-squad'
-print(ALL_MODELS)
+
 MODEL_CLASSES = {
     'bert': (BertConfig, BertForQuestionAnswering, BertTokenizer),
     'xlnet': (XLNetConfig, XLNetForQuestionAnswering, XLNetTokenizer),
@@ -220,7 +220,9 @@ def collect_answers(json_file):
         return json.load(f)
     
 
-def run_evaluation(model_name, pretrained_weights, cased=False, arxiv_id=None):
+def run_evaluation(model_name, pretrained_weights, model_type='bert', cased=False, 
+                   paper_arxiv_id='1810.04805', paper_pwc_id='bert-pre-training-of-deep-bidirectional', 
+                   cache={}):
     # parser = argparse.ArgumentParser()
     # parser.add_argument("--model_name", default=None, type=str, required=False,
     #                     help="Which models should we evaluate on")
@@ -240,7 +242,7 @@ def run_evaluation(model_name, pretrained_weights, cased=False, arxiv_id=None):
     args.max_answer_length = 30
     args.max_query_length = 64
     args.max_seq_length = 384
-    args.model_type = 'bert'
+    args.model_type = model_type
     args.n_best_size = 20
     args.no_cuda = False
     args.null_score_diff_threshold = 0.0
@@ -257,7 +259,8 @@ def run_evaluation(model_name, pretrained_weights, cased=False, arxiv_id=None):
         local_root=Path.home()/".cache/sotabench/data/squad/",
         model_name=model_name,
         version=SQuADVersion.V11,
-        paper_arxiv_id=arxiv_id
+        paper_arxiv_id=paper_arxiv_id,
+        paper_pwc_id=paper_pwc_id,
     )
     
     args.predict_file = evaluator.dataset_path
@@ -283,9 +286,11 @@ def run_evaluation(model_name, pretrained_weights, cased=False, arxiv_id=None):
     model = model_class.from_pretrained(args.model_name, config = config)
 
     model.to(args.device)
+    if model_type not in cache:
+        cache[model_type]  = load_and_cache_examples(
+            args, tokenizer, evaluate=True, output_examples=True)
     
-    dataset, examples, features = load_and_cache_examples(
-        args, tokenizer, evaluate=True, output_examples=True)
+    dataset, examples, features = cache[model_type]
     file_path = evaluate(args, model, tokenizer,  dataset, examples, features, one_batch=True, prefix='one_batch', run_eval=False)
     evaluator.add(collect_answers(file_path))
     if not evaluator.cache_exists:
@@ -308,9 +313,11 @@ def main():
     run_evaluation('BERT large (whole word masking, cased)',
                    'bert-large-uncased-whole-word-masking-finetuned-squad',
                     cased=True)
-    run_evaluation('DistilBERT',
-                    'distilbert-base-uncased-distilled-squad',
-                    arxiv_id='1910.01108')
+    # run_evaluation('DistilBERT',
+    #                 'distilbert-base-uncased-distilled-squad',
+    #                 model_type="distilbert",
+    #                 paper_pwc_id='distilbert-a-distilled-version-of-bert',
+    #                 paper_arxiv_id='1910.01108')
 
 if __name__ == "__main__":
     main()
