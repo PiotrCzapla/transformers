@@ -130,8 +130,8 @@ def preprocess_text(lines, fixes=[]):
     return "".join(reduce(lambda v, f: f(v), fixes, l) for l in lines)
 
 
-def _evaluate_gpt2(wikitext103_testset, model_name, model_description=None, pretrained_name=None, batch_size=8):
-    experiment = WikiText103Evaluator(
+def _evaluate_gpt2(wikitext103_testset, model_name, model_description=None, pretrained_name=None, batch_size=8, **kwagrs):
+    exp_args = dict(
         model_name=model_name,
         paper_pwc_id="language-models-are-unsupervised-multitask",
         model_description=model_description,
@@ -139,7 +139,8 @@ def _evaluate_gpt2(wikitext103_testset, model_name, model_description=None, pret
         subword_tokenization = True,
         #expected perplexity: 37.50, our: 36.49 ( or better if we predict 1 word at a time )
     )
-
+    exp_args.update(kwagrs)
+    experiment = WikiText103Evaluator(**exp_args)
     model, tokenizer = setup_gpt2(pretrained_name or model_name.lower())
     
     fixes = [fix_moses, fix_header, fix_unk('[unknown]')]
@@ -178,6 +179,15 @@ def evaluate_gpt2_large(wikitext103_testset):
                           # expected: 22.05
     )
 
+
+def evaluate_distilgpt2(wikitext103_testset):
+    return _evaluate_gpt2(wikitext103_testset,
+                          model_name="DistilGPT2",
+                          pretrained_name="distilgpt2",
+                          batch_size=1,
+                          paper_pwc_id=None,
+                          # expected: 22.05
+                          )
 ## GPT1
 
 def setup_gpt(model_name="openai-gpt"):
@@ -188,7 +198,7 @@ def setup_gpt(model_name="openai-gpt"):
 def evaluate_gpt1(wikitext103_testset):
     experiment = WikiText103Evaluator(
         model_name="GPT1",
-        paper_pwc_id="",
+        paper_pwc_id=None,
         text_transformation=True,
         subword_tokenization = True,
     )
@@ -211,16 +221,11 @@ def evaluate_gpt1(wikitext103_testset):
 evaluators, evaluator_names = list(zip(*[(v, n.replace("evaluate_", ""))
                                          for n, v in globals().items() if n.startswith('evaluate_')]))
 
-def main():
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model", default=None, type=str, required=False,
-                        help="Model to evaulate %s" % str(evaluator_names))
-    args = parser.parse_args()
-    
+def main():   
+    import os
     wikitext103_testset = read_wiki(WikiText103Evaluator.dataset.get_path(local_root=Path.home() / '.cache/sotabench/data/wikitext-103'))
     for evaluator in evaluators:
-        if (args.model or "") in evaluator.__name__:
+        if os.environ.get('MODEL', "") in evaluator.__name__:
             print("Running", evaluator.__name__)
             evaluator(wikitext103_testset)
 

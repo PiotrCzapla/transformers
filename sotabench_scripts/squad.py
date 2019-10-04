@@ -222,15 +222,9 @@ def collect_answers(json_file):
 
 def run_evaluation(model_name, pretrained_weights, model_type='bert', cased=False, 
                    paper_arxiv_id='1810.04805', paper_pwc_id='bert-pre-training-of-deep-bidirectional', 
-                   cache={}):
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("--model_name", default=None, type=str, required=False,
-    #                     help="Which models should we evaluate on")
-    # parser.add_argument("--force_full_run",  action='store_true',
-    #                     help='Ensures that we run a full model even if the cache matches the first batch.')
-    # args = parser.parse_args()
-    
+                   cache={}):  
     args = argparse.Namespace()
+    args.model_type = model_type
     args.model_name = pretrained_weights
     args.do_lower_case = not cased
 
@@ -308,16 +302,24 @@ def run_evaluation(model_name, pretrained_weights, model_type='bert', cased=Fals
     logger.info("Accuracy on full dataset: " + repr(evaluator.results))
 
 def main():
-    run_evaluation('BERT large (whole word masking, uncased)',
-                    'bert-large-uncased-whole-word-masking-finetuned-squad')
-    run_evaluation('BERT large (whole word masking, cased)',
-                   'bert-large-uncased-whole-word-masking-finetuned-squad',
-                    cased=True)
-    run_evaluation('DistilBERT',
-                    'distilbert-base-uncased-distilled-squad',
-                    model_type="distilbert",
-                    paper_pwc_id='distilbert-a-distilled-version-of-bert',
-                    paper_arxiv_id='1910.01108')
-
+    import os
+    evaluators_params = [
+        dict(model_name='BERT large (whole word masking, uncased)',
+             pretrained_weights='bert-large-uncased-whole-word-masking-finetuned-squad'),
+        dict(model_name='BERT large (whole word masking, cased)',
+             pretrained_weights='bert-large-uncased-whole-word-masking-finetuned-squad',
+             cased=True),
+        dict(model_name='DistilBERT',
+             pretrained_weights='distilbert-base-uncased-distilled-squad',
+             model_type="distilbert",
+             paper_pwc_id='distilbert-a-distilled-version-of-bert',
+             paper_arxiv_id='1910.01108')
+    ]
+    model = os.environ.get('MODEL', "")
+    for eval_params in evaluators_params:
+        if model in eval_params['pretrained_weights']:
+            print("Running", eval_params["model_name"])
+            run_evaluation(**eval_params)
+    
 if __name__ == "__main__":
     main()
