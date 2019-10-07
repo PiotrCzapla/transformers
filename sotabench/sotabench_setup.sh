@@ -2,28 +2,17 @@
 source /workspace/venv/bin/activate
 PYTHON=${PYTHON:-"python"}
 REPO="$( cd "$(dirname "$0")" ; pwd -P )"
-apt-get install -y git
+
+$PYTHON -m pip install -e .
+$PYTHON -m pip install torch
+$PYTHON -m pip install ftfy==4.4.3
+$PYTHON -m pip install spacy
+$PYTHON -m spacy download en
 
 echo Running temporary setup scripts
-cd ~
-SOTABENCH=~/.cache/sotabench
-mkdir -p $SOTABENCH
-cd $SOTABENCH
+apt-get install -y git
+cd /workspace
 git clone https://github.com/PiotrCzapla/sotabench-eval.git
 cd sotabench-eval
 git pull
-pip install -e .
-pip install torch
-
-apt-get install -y unzip
-mkdir -p $SOTABENCH/data
-cd $SOTABENCH/data
-ls
-find $REPO/.data
-/workspace/repository/
-[ -d wikitext-103 ] || unzip  $REPO/.data/nlp/wikitext-103/wikitext-103-v1.zip
-[ -d wikitext-2 ] || unzip  $REPO/.data/nlp/wikitext-2/wikitext-2-v1.zip
-
-pip install ftfy==4.4.3
-pip install spacy
-python -m spacy download en
+$PYTHON -m pip install -e .
