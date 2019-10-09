@@ -42,16 +42,23 @@ def read_wiki(path):
     with path.open() as f:
         return f.readlines()
 
-def evaluate(experiemnt, log_probs_generator, model, test_data, batch_size=8, bptt=128, device='cuda'):
+def evaluate(evaluator, log_probs_generator, model, test_data, batch_size=8, bptt=128, device='cuda'):
     test_data = torch.tensor(test_data).to(device)
     model = model.to(device)
     data_iter = iterate_over_batches(test_data, bs=batch_size, bptt=bptt)
     model.eval()
     with torch.no_grad():
-        total_steps = len(test_data)//(batch_size*bptt)
+        total_steps = len(test_data) // (batch_size*bptt)
         log_probs_generator_instance = log_probs_generator(model, data_iter)
-        experiemnt.eval(tqdm(log_probs_generator_instance, total = total_steps))
-        print("Evaluation results:", experiemnt.results)
+        
+        evaluator.reset()
+        evaluator.reset_time()
+        for results in tqdm(log_probs_generator_instance, total = total_steps):
+            evaluator.add(*results)
+            if evaluator.first_batch_processed and evaluator.cache_exists:
+                break
+        evaluator.save()
+        evaluator.print_results()
         
 ## Transformers XL
 
@@ -81,7 +88,7 @@ def setup_transfo_xl(model_name):
     return model, tokenizer
 
 def evaluate_transfo_xl(wikitext103_testset):
-    experiment = WikiText103Evaluator(
+    evaluator = WikiText103Evaluator(
         model_name="Transformer-XL Large",
         paper_arxiv_id="1901.02860",
         paper_pwc_id="transformer-xl-attentive-language-models",
@@ -101,7 +108,7 @@ def evaluate_transfo_xl(wikitext103_testset):
             past = {'mems': mems}
             yield log_probs, y
     
-    evaluate(experiment, log_probs_generator, model, test_data,  batch_size=8, bptt=128)
+    evaluate(evaluator, log_probs_generator, model, test_data,  batch_size=8, bptt=128)
 
 ## GPT2 evaulation
 
@@ -140,7 +147,7 @@ def _evaluate_gpt2(wikitext103_testset, model_name, model_description=None, pret
         #expected perplexity: 37.50, our: 36.49 ( or better if we predict 1 word at a time )
     )
     exp_args.update(kwagrs)
-    experiment = WikiText103Evaluator(**exp_args)
+    evaluator = WikiText103Evaluator(**exp_args)
     model, tokenizer = setup_gpt2(pretrained_name or model_name.lower())
     
     fixes = [fix_moses, fix_header, fix_unk('[unknown]')]
@@ -153,7 +160,7 @@ def _evaluate_gpt2(wikitext103_testset, model_name, model_description=None, pret
             logits, *_ = model(input_ids=x)
             yield torch.log_softmax(logits, dim=-1), y
     
-    evaluate(experiment, log_probs_generator, model,
+    evaluate(evaluator, log_probs_generator, model,
              test_data,  batch_size=batch_size, bptt=seq_len)
 
 
@@ -196,7 +203,7 @@ def setup_gpt(model_name="openai-gpt"):
     return model, tokenizer
 
 def evaluate_gpt1(wikitext103_testset):
-    experiment = WikiText103Evaluator(
+    evaluator = WikiText103Evaluator(
         model_name="GPT1",
         paper_pwc_id=None,
         text_transformation=True,
@@ -215,7 +222,7 @@ def evaluate_gpt1(wikitext103_testset):
             logits, *_ = model(input_ids=x)
             yield torch.log_softmax(logits, dim=-1), y
 
-    evaluate(experiment, log_probs_generator, model,
+    evaluate(evaluator, log_probs_generator, model,
              test_data,  batch_size=8, bptt=seq_len)
 
 evaluators, evaluator_names = list(zip(*[(v, n.replace("evaluate_", ""))
@@ -229,3 +236,6 @@ def main():
             print("Running", evaluator.__name__)
             evaluator(wikitext103_testset)
 
+
+if __name__ == '__main__':
+    main()
