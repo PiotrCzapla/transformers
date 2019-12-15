@@ -1,0 +1,29 @@
+{
+	"name": "Transformers",
+	"dockerFile": "Dockerfile",
+	
+	"workspaceMount": "source=transformers-code,target=/workspace,type=volume,volume-driver=local",
+	"mounts": [
+		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+	],
+	
+	"workspaceFolder": "/workspace",
+    "runArgs": [
+		"--gpus", "all",
+		// "--env", "LC_ALL=C.UTF-8",
+		// "--env", "LANG=C.UTF-8",
+	],
+	"settings": { 
+		"terminal.integrated.shell.linux": "/bin/bash",
+		"python.pythonPath": "/usr/local/bin/python",
+		"python.linting.pylintEnabled": true,
+		"python.linting.pylintPath": "/usr/local/bin/pylint",
+		"python.linting.enabled": true
+	},
+	
+	"postCreateCommand": "pip install -r requirements.txt --user",
+
+	"extensions": [
+		"ms-python.python"
+	]
+}
